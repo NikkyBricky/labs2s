@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "vector.h"
 
 
@@ -160,15 +161,22 @@ void Vector::popBack(){
     if(_size){
     --_size;
     }
+    else{
+        throw std::runtime_error("Vector is empty");
+    }
 }
 
 
 void Vector::popFront(){
-    for(size_t i = 0; i + 1 < _size; ++i){
-        _data[i] = _data[i + 1];
-    }
     if(_size){
+	for(size_t i = 0; i + 1 < _size; ++i){
+            _data[i] = _data[i + 1];
+        }
         --_size;
+    }
+
+    else{
+        throw std::runtime_error("Vector is empty");
     }
 }
 
