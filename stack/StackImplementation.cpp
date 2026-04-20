@@ -2,12 +2,12 @@
 
 
 void StackVector::push(const ValueType& value){
-    data.push_back(value);
+    data.pushBack(value);
 }
 
 
 void StackVector::pop(){
-    data.pop_back();
+    data.popBack();
 }
 
 
@@ -42,7 +42,7 @@ void StackList::pop() {
 
 
 const ValueType& StackList::top() const {
-    lst.back();    
+    return lst.back();    
 }
 
 

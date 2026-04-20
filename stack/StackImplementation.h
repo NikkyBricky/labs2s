@@ -1,6 +1,6 @@
 #pragma once
 #include <cstddef>
-#include <vector>
+#include "vector.h"
 #include "list.h"
 
 using ValueType = double;
@@ -19,7 +19,7 @@ class IStackImplementation {
 
 class StackVector : public IStackImplementation {
     private:
-    	std::vector<ValueType> data;
+    	Vector data;
     public:
         void push(const ValueType& value) override;
         void pop() override;
