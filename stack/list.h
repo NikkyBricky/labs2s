@@ -21,7 +21,7 @@ class List{
 	List& operator=(List&& other) noexcept;
 	~List();
         
-	void push_front(double n);
+	void push_front(ValueType n);
 	void pop_front();	
 	void push_back(const ValueType& value);
 	void pop_back();
@@ -37,7 +37,7 @@ class List{
 	void erase(ValueType n);
 	void clear();
 
-	double& operator[](unsigned i);
+	ValueType& operator[](unsigned i);
 	friend std::ostream& operator<<(std::ostream& strm, const List& lst);
         friend List operator+(const List& one, const List& other); 
 };
