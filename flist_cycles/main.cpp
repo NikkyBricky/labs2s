@@ -33,4 +33,6 @@ int main(){
 
     print_pair(cycle_pair);
     print_pair(non_cycle_pair);
+
+    return 0;
 }
