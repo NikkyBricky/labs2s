@@ -74,5 +74,6 @@ int main(){
     getline(std::cin, exp);
 
     std::cout << sorting_station(exp) << std::endl;
+    return 0;
 }
 
