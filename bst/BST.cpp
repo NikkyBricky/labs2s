@@ -111,7 +111,6 @@ BinarySearchTree::BinarySearchTree(BinarySearchTree &&other) noexcept
 {
     _root = other._root;
     _size = other._size;
-
     other._root = nullptr;
     other._size = 0;
 }
@@ -125,7 +124,6 @@ BinarySearchTree &BinarySearchTree::operator=(BinarySearchTree &&other) noexcept
 
     _root = other._root;
     _size = other._size;
-
     other._root = nullptr;
     other._size = 0;
 
@@ -317,11 +315,13 @@ BinarySearchTree::ConstIterator BinarySearchTree::ConstIterator::operator--()
     else
     {
         const Node *p = _node->parent;
+
         while (p && _node == p->left)
         {
             _node = p;
             p = p->parent;
         }
+
         _node = p;
     }
 
@@ -347,10 +347,7 @@ bool BinarySearchTree::ConstIterator::operator!=(const ConstIterator &other) con
 
 void BinarySearchTree::insert(const Key &key, const Value &value)
 {
-    auto colorOf = [](Node *n)
-    {
-        return n ? n->color : BLACK;
-    };
+    auto colorOf = [](Node *n) { return n ? n->color : BLACK; };
 
     auto leftRotate = [&](Node *x)
     {
@@ -376,7 +373,6 @@ void BinarySearchTree::insert(const Key &key, const Value &value)
     {
         Node *x = y->left;
         y->left = x->right;
-
         if (x->right)
             x->right->parent = y;
 
@@ -545,6 +541,115 @@ void BinarySearchTree::erase(const Key &key)
         _root->color = BLACK;
 }
 
+BinarySearchTree::Iterator BinarySearchTree::find(const Key &key)
+{
+    Node *cur = _root;
+    Node *res = nullptr;
+
+    while (cur)
+    {
+        if (key < cur->keyValuePair.first)
+            cur = cur->left;
+        else if (key > cur->keyValuePair.first)
+            cur = cur->right;
+        else
+        {
+            res = cur;
+            cur = cur->left;
+        }
+    }
+
+    return res ? Iterator(res) : end();
+}
+
+BinarySearchTree::ConstIterator BinarySearchTree::find(const Key &key) const
+{
+    const Node *cur = _root;
+    const Node *res = nullptr;
+
+    while (cur)
+    {
+        if (key < cur->keyValuePair.first)
+            cur = cur->left;
+        else if (key > cur->keyValuePair.first)
+            cur = cur->right;
+        else
+        {
+            res = cur;
+            cur = cur->left;
+        }
+    }
+
+    return res ? ConstIterator(res) : cend();
+}
+
+std::pair<BinarySearchTree::Iterator, BinarySearchTree::Iterator>
+BinarySearchTree::equalRange(const Key &key)
+{
+    Iterator first = find(key);
+    if (first == end())
+        return {end(), end()};
+
+    Iterator second = first;
+    while (second != end() && second->first == key)
+        ++second;
+
+    return {first, second};
+}
+
+std::pair<BinarySearchTree::ConstIterator, BinarySearchTree::ConstIterator>
+BinarySearchTree::equalRange(const Key &key) const
+{
+    ConstIterator first = find(key);
+    if (first == cend())
+        return {cend(), cend()};
+
+    ConstIterator second = first;
+    while (second != cend() && second->first == key)
+        ++second;
+
+    return {first, second};
+}
+
+BinarySearchTree::ConstIterator BinarySearchTree::min() const
+{
+    const Node *cur = _root;
+    if (!cur)
+        return cend();
+
+    while (cur->left)
+        cur = cur->left;
+
+    return ConstIterator(cur);
+}
+
+BinarySearchTree::ConstIterator BinarySearchTree::max() const
+{
+    const Node *cur = _root;
+    if (!cur)
+        return cend();
+
+    while (cur->right)
+        cur = cur->right;
+
+    return ConstIterator(cur);
+}
+
+BinarySearchTree::ConstIterator BinarySearchTree::min(const Key &key) const
+{
+    return equalRange(key).first;
+}
+
+BinarySearchTree::ConstIterator BinarySearchTree::max(const Key &key) const
+{
+    auto r = equalRange(key);
+    if (r.first == r.second)
+        return cend();
+    ConstIterator it = r.second;
+    --it;
+    return it;
+}
+
 BinarySearchTree::Iterator BinarySearchTree::begin()
 {
     Node *cur = _root;
@@ -600,114 +705,4 @@ size_t BinarySearchTree::max_height() const
     };
 
     return dfs(_root);
-}
-
-BinarySearchTree::Iterator BinarySearchTree::find(const Key &key)
-{
-    Node *cur = _root;
-
-    while (cur)
-    {
-        if (key < cur->keyValuePair.first)
-            cur = cur->left;
-        else if (key > cur->keyValuePair.first)
-            cur = cur->right;
-        else
-            return Iterator(cur);
-    }
-
-    return end();
-}
-
-BinarySearchTree::ConstIterator BinarySearchTree::find(const Key &key) const
-{
-    const Node *cur = _root;
-
-    while (cur)
-    {
-        if (key < cur->keyValuePair.first)
-            cur = cur->left;
-        else if (key > cur->keyValuePair.first)
-            cur = cur->right;
-        else
-            return ConstIterator(cur);
-    }
-
-    return cend();
-}
-
-std::pair<BinarySearchTree::Iterator, BinarySearchTree::Iterator>
-BinarySearchTree::equalRange(const Key &key)
-{
-    Iterator first = find(key);
-
-    if (first == end())
-        return {end(), end()};
-
-    Iterator second = first;
-
-    while (second != end() && second->first == key)
-        ++second;
-
-    return {first, second};
-}
-
-std::pair<BinarySearchTree::ConstIterator, BinarySearchTree::ConstIterator>
-BinarySearchTree::equalRange(const Key &key) const
-{
-    ConstIterator first = find(key);
-
-    if (first == cend())
-        return {cend(), cend()};
-
-    ConstIterator second = first;
-
-    while (second != cend() && second->first == key)
-        ++second;
-
-    return {first, second};
-}
-
-BinarySearchTree::ConstIterator BinarySearchTree::min() const
-{
-    const Node *cur = _root;
-
-    if (!cur)
-        return cend();
-
-    while (cur->left)
-        cur = cur->left;
-
-    return ConstIterator(cur);
-}
-
-BinarySearchTree::ConstIterator BinarySearchTree::max() const
-{
-    const Node *cur = _root;
-
-    if (!cur)
-        return cend();
-
-    while (cur->right)
-        cur = cur->right;
-
-    return ConstIterator(cur);
-}
-
-BinarySearchTree::ConstIterator BinarySearchTree::min(const Key &key) const
-{
-    auto range = equalRange(key);
-    return range.first;
-}
-
-BinarySearchTree::ConstIterator BinarySearchTree::max(const Key &key) const
-{
-    auto range = equalRange(key);
-
-    if (range.first == range.second)
-        return cend();
-
-    ConstIterator it = range.second;
-    --it;
-    return it;
 }
