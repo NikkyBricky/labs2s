@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-using Key = uint32_t; //!< тип ключей в дереве
+using Key = uint32_t; //!< тип ключей в дер
 using Value = double; //!< тип значений в дереве
 
 //! Имплементация бинарного дерева поиска
