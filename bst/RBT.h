@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-using Key = uint32_t; //!< тип ключей в дереве
+using Key = uint32_t; //!< тип ключей в дер
 using Value = double; //!< тип значений в дереве
 
 //! Имплементация бинарного дерева поиска
@@ -38,10 +38,12 @@ class BinarySearchTree
         Node *parent = nullptr; //!< родительский узел
         Node *left = nullptr;   //!< левый потомок
         Node *right = nullptr;  //!< правый потомок
+		
+		bool color = false; // для красно-черного дерева
+		//uint8_t height = 0; // для AVL дерева; выбираете одно из двух
     };
 
 public:
-    void freeSubtree(Node* other);
     //! Конструктор по умолчанию
     BinarySearchTree() = default;
     //! Конструктор копирования
@@ -78,7 +80,6 @@ public:
         bool operator!=(const Iterator &other) const;
 
     private:
-	friend BinarySearchTree;
         Node *_node;
     };
 
@@ -102,7 +103,6 @@ public:
 
     private:
         const Node *_node;
-	friend BinarySearchTree;
     };
 
     //! Вставить элемент с ключем key и значением value
@@ -149,8 +149,15 @@ public:
     size_t size() const;
     //! Вывести дерево в консоль
     void output_tree();
+	//! Получить максимальную высоту дерева
+	size_t max_height() const;
 
 private:
     size_t _size = 0; //!< размер дерева
     Node *_root = nullptr; //!< корневой узел дерева
+
+    void rotateLeft(Node* x);
+    void rotateRight(Node* x);
+    void fixDelete(Node* x);
+    Node* minimum(Node* n);
 };
