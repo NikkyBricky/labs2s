@@ -155,4 +155,9 @@ public:
 private:
     size_t _size = 0; //!< размер дерева
     Node *_root = nullptr; //!< корневой узел дерева
+
+    void rotateLeft(Node* x);
+    void rotateRight(Node* x);
+    void fixDelete(Node* x);
+    Node* minimum(Node* n);
 };
