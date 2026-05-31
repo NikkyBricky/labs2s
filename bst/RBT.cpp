@@ -460,12 +460,12 @@ BinarySearchTree::Iterator BinarySearchTree::Iterator::operator--(int)
 
 bool BinarySearchTree::Iterator::operator==(const Iterator& other) const
 {
-    return _node == other._node;
+    return _node->keyValuePair.first == other._node->keyValuePair.first;
 }
 
 bool BinarySearchTree::Iterator::operator!=(const Iterator& other) const
 {
-    return _node != other._node;
+    return _node->keyValuePair.first != other._node->keyValuePair.first;
 }
 
 BinarySearchTree::ConstIterator::ConstIterator(const Node* node)
@@ -575,12 +575,12 @@ BinarySearchTree::ConstIterator BinarySearchTree::ConstIterator::operator--(int)
 
 bool BinarySearchTree::ConstIterator::operator==(const ConstIterator& other) const
 {
-    return _node == other._node;
+    return _node->keyValuePair.first == other._node->keyValuePair.first;
 }
 
 bool BinarySearchTree::ConstIterator::operator!=(const ConstIterator& other) const
 {
-    return _node != other._node;
+    return _node->keyValuePair.first != other._node->keyValuePair.first;
 }
 
 void BinarySearchTree::insert(const Key& key, const Value& value)
