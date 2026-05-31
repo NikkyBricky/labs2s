@@ -1,13 +1,13 @@
 .PHONY: clean
 
-main: main.o BST.o
-	g++ main.o BST.o -o main
+main: main.o RBT.o
+	g++ main.o RBT.o -o main
 
 main.o: main.cpp
 	g++ -c main.cpp
 
-BST.o: BST.cpp
-	g++ -c BST.cpp
+RBT.o: RBT.cpp
+	g++ -c RBT.cpp
 
 clean:
 	rm *.o main
