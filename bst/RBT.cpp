@@ -667,29 +667,30 @@ BinarySearchTree::Iterator BinarySearchTree::find(const Key& key)
 std::pair<BinarySearchTree::Iterator, BinarySearchTree::Iterator>
 BinarySearchTree::equalRange(const Key& key)
 {
+    Iterator it = begin();
     Iterator e = end();
-    Iterator current = begin();
 
-    while (current != e && current->first != key) ++current;
+    while (it != e && it->first < key) ++it;
 
-    Iterator first = current;
-    while (current != e && current->first == key) ++current;
+    Iterator first = it;
 
-    return {first, current};
-}
+    while (it != e && it->first == key) ++it;
+
+    return {first, it};}
 
 std::pair<BinarySearchTree::ConstIterator, BinarySearchTree::ConstIterator>
 BinarySearchTree::equalRange(const Key& key) const
 {
-    ConstIterator e = cend();
-    ConstIterator current = cbegin();
+   ConstIterator it = cbegin();
+   ConstIterator e = cend();
 
-    while (current != e && current->first != key) ++current;
+   while (it != e && it->first < key) ++it;
 
-    ConstIterator first = current;
-    while (current != e && current->first == key) ++current;
+   ConstIterator first = it;
 
-    return {first, current};
+   while (it != e && it->first == key) ++it;
+
+   return {first, it};
 }
 
 BinarySearchTree::ConstIterator BinarySearchTree::min() const
