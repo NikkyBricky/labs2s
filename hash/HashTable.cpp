@@ -3,9 +3,19 @@
 #include <functional>
 #include <utility>
 
-size_t HashTable::hash_function(const KeyType &key) const
-{
-    return std::hash<KeyType>{}(key);
+size_t HashTable::hash_function(const KeyType &key) const {
+    const int p = 31;
+    const int m = 1e9 + 9; 
+    long long hash_value = 0;
+    long long p_pow = 1;
+    
+    for (char c : key) {
+	long long char_code = (c - 'a' + 1);
+        hash_value = (hash_value + char_code * p_pow) % m;
+        p_pow = (p_pow * p) % m;
+    }
+    
+    return hash_value;
 }
 
 HashTable::HashTable(size_t size) noexcept
