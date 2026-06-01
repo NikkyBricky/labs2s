@@ -1,12 +1,51 @@
-#include <cstdint>
-#include <functional>
-
 #include "HashTable.h"
 
+#include <cstdint>
+#include <utility>
+
+#define SIX_SEVEN 67
+
+static size_t strhash(const KeyType &key)
+{
+    size_t hash = 0;
+    for (size_t i = 0; i < key.size(); ++i)
+    {
+        hash = hash * SIX_SEVEN + key[i];
+    }
+    return hash;
+}
+
+static size_t rehash(std::vector<std::list<std::pair<KeyType, ValueType>>> &table)
+{
+    size_t newSize = table.size() * 2;
+    size_t filled = 0;
+    std::vector<std::list<std::pair<KeyType, ValueType>>> newTable(newSize);
+
+    for (size_t i = 0; i < table.size(); ++i)
+    {
+        for (auto it = table[i].cbegin(); it != table[i].cend(); ++it)
+        {
+            size_t hash = strhash(it->first);
+            auto &bucket = newTable[hash % newSize];
+            if (bucket.empty())
+            {
+                ++filled;
+            }
+            bucket.push_back(*it);
+        }
+    }
+
+    table = std::move(newTable);
+    return filled;
+}
+
+size_t HashTable::hash_function(const KeyType &key) const
+{
+    return strhash(key);
+}
+
 HashTable::HashTable(size_t size) noexcept
-    : _capacity(static_cast<int32_t>(size == 0 ? 1 : size)),
-      _filled(0),
-      table(static_cast<size_t>(_capacity))
+    : _capacity(size ? size : 1), _filled(0), table(_capacity)
 {
 }
 
@@ -14,123 +53,58 @@ HashTable::~HashTable()
 {
 }
 
-size_t HashTable::hash_function(const KeyType &key) const
-{
-    if (_capacity <= 0)
-    {
-        return 0;
-    }
-
-    return std::hash<KeyType>{}(key) % static_cast<size_t>(_capacity);
-}
-
 void HashTable::insert(const KeyType &key, const ValueType &value)
 {
-    if (_capacity <= 0)
+    auto &list = table[hash_function(key) % _capacity];
+
+    for (auto it = list.begin(); it != list.end(); ++it)
     {
-        _capacity = 1;
-        table.assign(static_cast<size_t>(_capacity), {});
-        _filled = 0;
-    }
-
-    auto rehash = [this](int32_t newCapacity)
-    {
-        std::vector<std::list<std::pair<KeyType, ValueType>>> oldTable = std::move(table);
-
-        _capacity = newCapacity;
-        table.assign(static_cast<size_t>(_capacity), {});
-        _filled = 0;
-
-        for (const auto &bucket : oldTable)
+        if (it->first == key)
         {
-            for (const auto &entry : bucket)
-            {
-                size_t index = hash_function(entry.first);
-                auto &destBucket = table[index];
-
-                if (destBucket.empty())
-                {
-                    ++_filled;
-                }
-
-                destBucket.push_back(entry);
-            }
-        }
-    };
-
-    size_t index = hash_function(key);
-    auto &bucket = table[index];
-
-    for (auto &entry : bucket)
-    {
-        if (entry.first == key)
-        {
-            entry.second = value;
+            it->second = value;
             return;
         }
     }
 
-    if (bucket.empty())
-    {
-        if (static_cast<double>(_filled + 1) / static_cast<double>(_capacity) > 0.75)
-        {
-            rehash(_capacity * 2);
-            index = hash_function(key);
-        }
-    }
-
-    auto &targetBucket = table[index];
-    if (targetBucket.empty())
+    list.push_back(std::pair<KeyType, ValueType>(key, value));
+    if (list.size() == 1)
     {
         ++_filled;
     }
 
-    targetBucket.emplace_back(key, value);
+    if (getLoadFactor() > 0.75)
+    {
+        _filled = rehash(table);
+        _capacity *= 2;
+    }
 }
 
 bool HashTable::find(const KeyType &key, ValueType &value) const
 {
-    if (_capacity <= 0)
+    const auto &list = table[hash_function(key) % _capacity];
+    for (auto it = list.cbegin(); it != list.cend(); ++it)
     {
-        return false;
-    }
-
-    size_t index = hash_function(key);
-    const auto &bucket = table[index];
-
-    for (const auto &entry : bucket)
-    {
-        if (entry.first == key)
+        if (it->first == key)
         {
-            value = entry.second;
+            value = it->second;
             return true;
         }
     }
-
     return false;
 }
 
 void HashTable::remove(const KeyType &key)
 {
-    if (_capacity <= 0)
-    {
-        return;
-    }
-
-    size_t index = hash_function(key);
-    auto &bucket = table[index];
-
-    for (auto it = bucket.begin(); it != bucket.end(); ++it)
+    auto &list = table[hash_function(key) % _capacity];
+    for (auto it = list.begin(); it != list.end(); ++it)
     {
         if (it->first == key)
         {
-            bucket.erase(it);
-
-            if (bucket.empty())
+            list.erase(it);
+            if (list.empty())
             {
                 --_filled;
             }
-
             return;
         }
     }
@@ -138,74 +112,20 @@ void HashTable::remove(const KeyType &key)
 
 ValueType &HashTable::operator[](const KeyType &key)
 {
-    if (_capacity <= 0)
+    auto &list = table[hash_function(key) % _capacity];
+    for (auto it = list.begin(); it != list.end(); ++it)
     {
-        _capacity = 1;
-        table.assign(static_cast<size_t>(_capacity), {});
-        _filled = 0;
-    }
-
-    auto rehash = [this](int32_t newCapacity)
-    {
-        std::vector<std::list<std::pair<KeyType, ValueType>>> oldTable = std::move(table);
-
-        _capacity = newCapacity;
-        table.assign(static_cast<size_t>(_capacity), {});
-        _filled = 0;
-
-        for (const auto &bucket : oldTable)
+        if (it->first == key)
         {
-            for (const auto &entry : bucket)
-            {
-                size_t index = hash_function(entry.first);
-                auto &destBucket = table[index];
-
-                if (destBucket.empty())
-                {
-                    ++_filled;
-                }
-
-                destBucket.push_back(entry);
-            }
-        }
-    };
-
-    size_t index = hash_function(key);
-    auto &bucket = table[index];
-
-    for (auto &entry : bucket)
-    {
-        if (entry.first == key)
-        {
-            return entry.second;
+            return it->second;
         }
     }
 
-    if (bucket.empty())
-    {
-        if (static_cast<double>(_filled + 1) / static_cast<double>(_capacity) > 0.75)
-        {
-            rehash(_capacity * 2);
-            index = hash_function(key);
-        }
-    }
-
-    auto &targetBucket = table[index];
-    if (targetBucket.empty())
-    {
-        ++_filled;
-    }
-
-    targetBucket.emplace_back(key, ValueType{});
-    return targetBucket.back().second;
+    insert(key, 0);
+    return (*this)[key];
 }
 
 double HashTable::getLoadFactor()
 {
-    if (_capacity <= 0)
-    {
-        return 0.0;
-    }
-
-    return static_cast<double>(_filled) / static_cast<double>(_capacity);
+    return (double)_filled / _capacity;
 }
