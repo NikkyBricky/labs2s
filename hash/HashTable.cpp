@@ -1,47 +1,11 @@
 #include "HashTable.h"
 
-#include <cstdint>
+#include <functional>
 #include <utility>
-
-#define SIX_SEVEN 67
-
-static size_t strhash(const KeyType &key)
-{
-    size_t hash = 0;
-    for (size_t i = 0; i < key.size(); ++i)
-    {
-        hash = hash * SIX_SEVEN + key[i];
-    }
-    return hash;
-}
-
-static size_t rehash(std::vector<std::list<std::pair<KeyType, ValueType>>> &table)
-{
-    size_t newSize = table.size() * 2;
-    size_t filled = 0;
-    std::vector<std::list<std::pair<KeyType, ValueType>>> newTable(newSize);
-
-    for (size_t i = 0; i < table.size(); ++i)
-    {
-        for (auto it = table[i].cbegin(); it != table[i].cend(); ++it)
-        {
-            size_t hash = strhash(it->first);
-            auto &bucket = newTable[hash % newSize];
-            if (bucket.empty())
-            {
-                ++filled;
-            }
-            bucket.push_back(*it);
-        }
-    }
-
-    table = std::move(newTable);
-    return filled;
-}
 
 size_t HashTable::hash_function(const KeyType &key) const
 {
-    return strhash(key);
+    return std::hash<KeyType>{}(key);
 }
 
 HashTable::HashTable(size_t size) noexcept
@@ -55,7 +19,8 @@ HashTable::~HashTable()
 
 void HashTable::insert(const KeyType &key, const ValueType &value)
 {
-    auto &list = table[hash_function(key) % _capacity];
+    auto hash = hash_function(key);
+    auto &list = table[hash % _capacity];
 
     for (auto it = list.begin(); it != list.end(); ++it)
     {
@@ -67,6 +32,7 @@ void HashTable::insert(const KeyType &key, const ValueType &value)
     }
 
     list.push_back(std::pair<KeyType, ValueType>(key, value));
+
     if (list.size() == 1)
     {
         ++_filled;
@@ -74,14 +40,34 @@ void HashTable::insert(const KeyType &key, const ValueType &value)
 
     if (getLoadFactor() > 0.75)
     {
-        _filled = rehash(table);
+        size_t newSize = table.size() * 2;
+        size_t filled = 0;
+        std::vector<std::list<std::pair<KeyType, ValueType>>> newTable(newSize);
+
+        for (size_t i = 0; i < table.size(); ++i)
+        {
+            for (auto it = table[i].cbegin(); it != table[i].cend(); ++it)
+            {
+                size_t newHash = hash_function(it->first);
+                auto &newList = newTable[newHash % newSize];
+                if (newList.empty())
+                {
+                    ++filled;
+                }
+                newList.push_back(*it);
+            }
+        }
+
+        table = std::move(newTable);
         _capacity *= 2;
+        _filled = filled;
     }
 }
 
 bool HashTable::find(const KeyType &key, ValueType &value) const
 {
     const auto &list = table[hash_function(key) % _capacity];
+
     for (auto it = list.cbegin(); it != list.cend(); ++it)
     {
         if (it->first == key)
@@ -90,12 +76,14 @@ bool HashTable::find(const KeyType &key, ValueType &value) const
             return true;
         }
     }
+
     return false;
 }
 
 void HashTable::remove(const KeyType &key)
 {
     auto &list = table[hash_function(key) % _capacity];
+
     for (auto it = list.begin(); it != list.end(); ++it)
     {
         if (it->first == key)
@@ -113,6 +101,7 @@ void HashTable::remove(const KeyType &key)
 ValueType &HashTable::operator[](const KeyType &key)
 {
     auto &list = table[hash_function(key) % _capacity];
+
     for (auto it = list.begin(); it != list.end(); ++it)
     {
         if (it->first == key)
