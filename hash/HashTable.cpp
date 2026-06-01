@@ -19,13 +19,9 @@ size_t HashTable::hash_function(const KeyType &key) const {
 }
 
 HashTable::HashTable(size_t size) noexcept
-    : _capacity(size ? size : 1), _filled(0), table(_capacity)
-{
-}
+    : _capacity(size ? size : 1), _filled(0), table(_capacity) {}
 
-HashTable::~HashTable()
-{
-}
+HashTable::~HashTable() {}
 
 void HashTable::insert(const KeyType &key, const ValueType &value)
 {
